@@ -1,0 +1,491 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block title %}
+    {{ user.username }}'s Profile
+{% endblock %}
+
+{% block content %}
+<style>
+    
+
+    .profile-container {
+        min-height: 88.7vh;
+        max-width: 600px;
+        margin: auto;
+        background-color: #f9f9f9;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+    .profile-container h2 {
+        font-family: 'Arial', sans-serif;
+        color: #333;
+        margin-bottom: 15px;
+    }
+    .profile-pic-section img {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-bottom: 15px;
+        border: 3px solid #ddd;
+    }
+    .btn-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 10px;
+    }
+    .btn-upload, .btn-remove {
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        flex: 1;
+        max-width: 200px;
+    }
+    .btn-upload:hover {
+        background-color: #45a049;
+    }
+    .btn-remove {
+        background-color: #f44336;
+    }
+    .btn-remove:hover {
+        background-color: #d32f2f;
+    }
+    .post-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+    .post-item {
+        position: relative;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        overflow: hidden;
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .post-item img {
+        width: 100%;
+        height: 200px; /* You can adjust this height as needed */
+        object-fit: contain; /* Ensures the image fits within the box without cropping */
+        background-color: #f0f0f0; /* Optional: Adds a background color for better contrast */
+    }
+    
+    .post-content {
+        padding: 10px;
+    }
+    .post-content h4 {
+        font-size: 16px;
+        margin: 0 0 5px;
+        color: #333;
+    }
+    .post-content p {
+        font-size: 14px;
+        color: #666;
+    }
+    .btn-follow, .btn-unfollow {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .btn-unfollow {
+        background-color: #f44336;
+    }
+    .btn-follow:hover, .btn-unfollow:hover {
+        opacity: 0.8;
+    }
+    
+    .fcounts{
+        color:green;
+        display:flex;
+        justify-content:center;
+        column-gap:30px;
+        
+    }
+
+    .post-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+    }
+    .like-btn, .comment-btn, .read-comments-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+        color: #28a745;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .like-btn:hover, .comment-btn:hover, .read-comments-btn:hover {
+        color: #218838;
+    }
+    /* Comment input styling */
+    .comment-form {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 10px;
+        width: 100%;
+    }
+    .comment-input {
+        flex-grow: 1;
+        padding: 8px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        font-size: 0.9rem;
+    }
+    /* Comments section styling */
+    .comments-section {
+        padding: 10px;
+        border-top: 1px solid #ddd;
+        margin-top: 10px;
+        max-height: 250px;
+        overflow-y: auto;
+    }
+    .comment {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 0;
+        border-bottom: 1px solid #eee;
+        position: relative;
+        color:black;
+    }
+    .delete-comment-btn {
+        background: none;
+        border: none;
+        color: #dc3545; /* Red color */
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: color 0.3s;
+    }
+    .comment-content {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        align-items: flex-start;
+        color:black;
+    }
+    .delete-comment-btn:hover {
+        color: #a71d2a; /* Darker red on hover */
+    }
+    /* Responsive styling */
+    @media (max-width: 600px) {
+        .post-actions {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+    }
+    .delete-post-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: none;
+        border: none;
+        color: red;
+        font-size: 1.2rem;
+        cursor: pointer;
+        font-weight: bold;
+        transition: color 0.3s;
+    }
+    
+    .delete-post-btn:hover {
+        color: #a71d2a; /* Darker red on hover */
+    }
+ 
+</style>
+
+<div class="profile-container">
+    <h2>{{ user.username }}'s Profile</h2>
+
+    {% if user_profile.profile_picture and user_profile.profile_picture.url != '/media/images/default_profile.png' %}
+        <div class="profile-pic-section">
+            <img src="{{ user_profile.profile_picture.url }}" alt="Profile Picture" class="profile-pic" />
+            <div class="btn-container">
+                <form method="POST" action="{% url 'posts:delete_profile_picture' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-remove">Remove Profile Picture</button>
+                </form>
+                <form method="POST" enctype="multipart/form-data" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="file" name="profile_picture" accept="image/*" class="btn-upload" style="display: inline-block;"/>
+                    <button type="submit" class="btn-upload">Upload</button>
+                </form>
+            </div>
+        </div>
+    {% else %}
+        <p>No profile picture uploaded.</p>
+        <img src="{% static 'images/default_profile.png' %}" alt="Default Profile Picture" class="profile-pic" />
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="file" name="profile_picture" accept="image/*" class="btn-upload" style="display: inline-block; margin: 10px auto;"/>
+            <button type="submit" class="btn-upload">Upload</button>
+        </form>
+    {% endif %}
+
+    <!-- Follow/Unfollow Button -->
+    {% if user != request.user %}
+        {% if user in request.user.following.all %}
+            <form method="POST" action="{% url 'unfollow_user' user.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn-unfollow">Unfollow</button>
+            </form>
+        {% else %}
+            <form method="POST" action="{% url 'follow_user' user.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn-follow">Follow</button>
+            </form>
+        {% endif %}
+    {% endif %}
+
+    <div class="fcounts">
+        <p>Followers: {{ user_profile.followers.count }}</p>
+        <p>Following: {{ user.following.count }}</p>
+    </div>
+
+    <h3>Your Posts</h3>
+    {% if posts %}
+        <div class="post-grid">
+            {% for post in posts %}
+                <div class="post-item">
+                    <img src="{{ post.banner.url }}" alt="{{ post.title }}">
+                    <div class="post-content">
+                        <h4>{{ post.title }}</h4>
+                        <p>{{ post.body|truncatewords:15 }}</p>
+                    </div>
+
+                    <!-- Delete Post Button -->
+                    <form method="POST" action="{% url 'posts:delete_post' post.id %}" class="delete-post-form" onsubmit="return confirmDelete()">
+                        {% csrf_token %}
+                        <button type="submit" class="delete-post-btn" title="Delete Post">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </form>
+
+                    <form method="POST" action="{% url 'posts:like_post' post.id %}" class="like-form" id="like-form-{{ post.id }}">
+                        {% csrf_token %}
+                        {% if request.user in post.likes.all %}
+                            <button type="button" class="like-btn" onclick="likePost({{ post.id }}, false)">
+                                <i class="fas fa-thumbs-down"></i> Unlike ({{ post.likes.count }})
+                            </button>
+                        {% else %}
+                            <button type="button" class="like-btn" onclick="likePost({{ post.id }}, true)">
+                                <i class="fas fa-thumbs-up"></i> Like ({{ post.likes.count }})
+                            </button>
+                        {% endif %}
+                    </form>
+
+                    <form method="POST" action="{% url 'posts:comment_post' post.id %}" class="comment-form" id="comment-form-{{ post.id }}">
+                        {% csrf_token %}
+                        <input type="text" name="comment" placeholder="Add a comment..." class="comment-input" required>
+                        <button type="submit" class="comment-btn"><i class="fas fa-comment"></i> Comment</button>
+                    </form>
+
+                    <button id="toggle-comments-btn-{{ post.id }}" class="read-comments-btn" onclick="toggleComments('{{ post.id }}')">Read Comments</button>
+
+                    <div class="comments-section" id="all-comments-{{ post.id }}" style="display: none;">
+                        {% for comment in post.comments.all %}
+                            <div class="comment" id="comment-{{ comment.id }}">
+                                <div class="comment-content">
+                                    <strong>{{ comment.user.username }}:</strong> {{ comment.text }}
+                                    {% if comment.user == request.user %}
+                                        <button class="delete-comment-btn" onclick="deleteComment({{ comment.id }})" title="Delete Comment">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="post-full-text" id="full-text-{{ post.id }}" style="display: none;">
+                        {{ post.body }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>You have no posts yet.</p>
+    {% endif %}
+</div>
+
+<script>
+    function toggleComments(postId) {
+        const allCommentsDiv = document.getElementById(`all-comments-${postId}`);
+        const button = document.getElementById(`toggle-comments-btn-${postId}`);
+
+        if (allCommentsDiv.style.display === 'none') {
+            allCommentsDiv.style.display = 'block';
+            button.textContent = 'Read Less';
+        } else {
+            allCommentsDiv.style.display = 'none';
+            button.textContent = 'Read Comments';
+        }
+    }
+
+    // Handle comment submission
+    document.querySelectorAll('.comment-form').forEach(form => {
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();  // Prevent the default form submission
+            const formData = new FormData(form);  // Create FormData object
+
+            const postId = form.id.split('-')[2];  // Extract post ID from form ID
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value  // CSRF token
+                },
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();  // Parse JSON response
+                } else {
+                    throw new Error('Something went wrong');
+                }
+            })
+            .then(data => {
+                // Update the comments section with the new comment
+                const commentsSection = document.getElementById(`all-comments-${postId}`);
+                const newComment = document.createElement('div');
+                newComment.className = 'comment';
+                newComment.id = `comment-${data.id}`; // Set id for the comment div
+                newComment.innerHTML = `<strong>${data.username}:</strong> ${data.text}
+                    <button class="delete-comment-btn" onclick="deleteComment(${data.id})" title="Delete Comment">
+                        <i class="fas fa-times"></i>
+                    </button>`;
+                commentsSection.appendChild(newComment);
+                
+                // Optionally clear the input field after submission
+                form.querySelector('.comment-input').value = '';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    });
+
+    function likePost(postId, isLike) {
+        const form = document.getElementById(`like-form-${postId}`);
+        const url = form.getAttribute('action');
+        const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        // Send AJAX request
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            },
+            body: JSON.stringify({ 'like': isLike })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Update the like button and count
+            const likeButton = form.querySelector('.like-btn');
+            if (isLike) {
+                likeButton.innerHTML = `<i class="fas fa-thumbs-down"></i> Unlike (${data.likes_count})`;
+                likeButton.setAttribute('onclick', `likePost(${postId}, false)`);
+            } else {
+                likeButton.innerHTML = `<i class="fas fa-thumbs-up"></i> Like (${data.likes_count})`;
+                likeButton.setAttribute('onclick', `likePost(${postId}, true)`);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function deleteComment(commentId) {
+        fetch(`/posts/comments/delete/${commentId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')  // Add CSRF token
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remove the comment from the DOM
+                const commentElement = document.getElementById(`comment-${commentId}`);
+                if (commentElement) {
+                    commentElement.remove();
+                }
+            } else {
+                alert('Failed to delete comment.');
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+    document.addEventListener('click', function (event) {
+        if (event.target.matches('.delete-comment-btn')) {
+            const commentId = event.target.getAttribute('data-comment-id');
+            deleteComment(commentId);
+        }
+    });   
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    document.querySelectorAll('.follow-form').forEach(form => {
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();  // Prevent the form from reloading the page
+
+            const url = form.getAttribute('action');
+            const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                const button = form.querySelector('.follow-btn');
+                if (data.is_following) {
+                    button.textContent = 'Unfollow';
+                    button.classList.add('unfollow');
+                    button.classList.remove('follow');
+                } else {
+                    button.textContent = 'Follow +';
+                    button.classList.add('follow');
+                    button.classList.remove('unfollow');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+    
+    function confirmDelete() {
+        return confirm("Are you sure you want to delete this post?");
+    }
+</script>
+{% endblock %}

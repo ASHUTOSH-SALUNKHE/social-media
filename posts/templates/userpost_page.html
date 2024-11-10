@@ -1,0 +1,14 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Home
+{% endblock %}
+
+{% block content %}
+    
+    <h1>Hi Welcome {{posts.title}}</h1>
+
+    <img src = {{posts.banner.url}}></img>
+    <div>{{posts.body}}</div>
+    
+{% endblock %}

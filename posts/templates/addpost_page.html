@@ -1,0 +1,51 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Add Post
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1 class="form-title">Create a New Post</h1>
+    <form action="{% url 'posts:addpost' %}" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="file-upload">
+            <label for="id_banner" class="custom-file-upload">
+                <div class="file-upload-icon" id="upload-icon">+</div>
+                <img id="preview-image" src="#" alt="Image preview" style="display:none;">
+            </label>
+            {{ form.banner }}
+        </div>
+        
+        <div class="form-group">
+            <label for="id_body" class="form-label">Description</label>
+            {{ form.body }}
+        </div>
+        
+        <button class="form-submit">Add Post</button>
+    </form>
+</div>
+
+<!-- JavaScript for image preview -->
+<script>
+document.getElementById('id_banner').addEventListener('change', function(event) {
+    var fileInput = event.target;
+    var file = fileInput.files[0];
+    
+    if (file) {
+        var reader = new FileReader();
+        
+        reader.onload = function(e) {
+            // Hide the upload icon and show the preview image
+            document.getElementById('upload-icon').style.display = 'none';
+            var previewImage = document.getElementById('preview-image');
+            previewImage.src = e.target.result;
+            previewImage.style.display = 'block';
+        }
+        
+        reader.readAsDataURL(file);
+    }
+});
+</script>
+{% endblock %}

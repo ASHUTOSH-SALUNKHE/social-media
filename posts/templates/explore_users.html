@@ -1,0 +1,70 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block title %}
+    Explore Users
+{% endblock %}
+
+{% block content %}
+    <h1>Explore Users</h1>
+
+    <!-- Search input for filtering users -->
+    <div class="exp-search-container">
+        <input type="text" id="exp-searchInput" placeholder="Search by username..." onkeyup="filterUsers()" />
+    </div>
+
+    <div id="exp-usersList">
+        {% for users in userprofile %}
+            <div class="exp-user-entry">
+                
+               {% if users.profile_picture %}
+                 <a href="{% url 'posts:user_posts' users.user.username %}">
+                   <img src="{{ users.profile_picture.url }}" alt="Profile Picture" width="150" />
+                 </a>
+               {% else %}
+                  <a href="{% url 'posts:user_posts' users.user.username %}">
+                      <img src="{% static 'images/default_profile.png' %}" alt="Default Profile Picture" width="150" /> 
+                  </a>
+               {% endif %}
+                <a href="{% url 'posts:user_posts' users.user.username %}" style="text-decoration: none;">
+                    <span class="exp-username">{{ users.user.username }}</span>
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+
+    <p id="exp-noResults" style="display: none;">No users found.</p>
+
+    <script>
+        function filterUsers() {
+            var input = document.getElementById('exp-searchInput');
+            var filter = input.value.toLowerCase();
+            var usersList = document.getElementById('exp-usersList');
+            var users = usersList.getElementsByClassName('exp-user-entry');
+            var hasResults = false;
+
+            for (var i = 0; i < users.length; i++) {
+                var username = users[i].getElementsByClassName('exp-username')[0].textContent.toLowerCase();
+                
+                if (username.indexOf(filter) > -1) {
+                    users[i].style.display = "";
+                    hasResults = true;
+                } else {
+                    users[i].style.display = "none";
+                }
+            }
+
+            if (!hasResults) {
+                document.getElementById('exp-noResults').style.display = "block";
+            } else {
+                document.getElementById('exp-noResults').style.display = "none";
+            }
+        }
+    </script>
+
+
+    <style>
+        
+    </style>
+    
+{% endblock %}

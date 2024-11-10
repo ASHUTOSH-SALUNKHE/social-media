@@ -1,0 +1,397 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block title %}
+    Home
+{% endblock %}
+
+{% block content %}
+    <div class="posts-container">
+        {% for post in posts %}
+            <div class="post">
+                <div id="title">
+                    {% for profile in userprofiles %}
+                        {% if profile.user == post.author %}
+                            {% if profile.profile_picture %}
+                                <img src="{{ profile.profile_picture.url }}" alt="{{ post.author }}'s profile picture" class="profile-picture">
+                            {% else %}
+                                <img src="{% static 'images/default_profile.png' %}" alt="{{ post.author }}'s profile picture" class="profile-picture">
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+
+                    <div class="post-info">
+                        <a href="{% url 'posts:user_posts' post.author %}">{{ post.author }}</a>
+                        <span class="post-date">{{ post.date }}</span>
+                        {% if post.author != request.user %}
+                            <form method="POST" action="{% url 'posts:toggle_follow' post.author.username %}" class="follow-form">
+                                {% csrf_token %}
+                                {% if request.user in post.author.userprofile.followers.all %}
+                                    <button type="submit" class="follow-btn unfollow">Unfollow</button>
+                                {% else %}
+                                    <button type="submit" class="follow-btn follow">Follow +</button>
+                                {% endif %}
+                            </form>
+                        {% endif %}
+                    </div>
+                    
+                </div>
+
+                <a>
+                    <img class="newpost_page-img" src="{{ post.banner.url }}" alt="{{ post.author }}'s post image">
+                </a>
+                <div id="newpost_page-body">
+                    <span>{{ post.author }}</span> :- {{ post.body|slice:":150" }}{% if post.body|length > 150 %}...{% endif %}
+                </div>
+
+                <div class="post-actions">
+                    <form method="POST" action="{% url 'posts:like_post' post.id %}" class="like-form" id="like-form-{{ post.id }}">
+                        {% csrf_token %}
+                        {% if request.user in post.likes.all %}
+                            <button type="button" class="like-btn" onclick="likePost({{ post.id }}, false)">
+                                <i class="fas fa-thumbs-down"></i> Unlike ({{ post.likes.count }})
+                            </button>
+                        {% else %}
+                            <button type="button" class="like-btn" onclick="likePost({{ post.id }}, true)">
+                                <i class="fas fa-thumbs-up"></i> Like ({{ post.likes.count }})
+                            </button>
+                        {% endif %}
+                    </form>
+
+                    <form method="POST" action="{% url 'posts:comment_post' post.id %}" class="comment-form" id="comment-form-{{ post.id }}">
+                        {% csrf_token %}
+                        <input type="text" name="comment" placeholder="Add a comment..." class="comment-input" required>
+                        <button type="submit" class="comment-btn"><i class="fas fa-comment"></i> Comment</button>
+                    </form>
+
+                    <button id="toggle-comments-btn-{{ post.id }}" class="read-comments-btn" onclick="toggleComments('{{ post.id }}')">Read Comments</button>
+                </div>
+
+                <div class="comments-section" id="all-comments-{{ post.id }}" style="display: none;">
+                    {% for comment in post.comments.all %}
+                        <div class="comment" id="comment-{{ comment.id }}">
+                            <div class="comment-content">
+                                <strong>{{ comment.user.username }}:</strong> {{ comment.text }}
+                                {% if comment.user == request.user %}
+                                    <button class="delete-comment-btn" onclick="deleteComment({{ comment.id }})" title="Delete Comment">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+
+                <div class="post-full-text" id="full-text-{{ post.id }}" style="display: none;">
+                    {{ post.body }}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <style>
+        /* General styling for post elements */
+        /* Follow button styling */
+.follow-form {
+    display: inline-block;
+    margin-left: auto;
+    align-self: center;
+    position
+}
+
+.follow-btn {
+    background-color: #007bff; /* Primary blue */
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.3s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.follow-btn:hover {
+    background-color: #0056b3; /* Darker blue */
+}
+
+.unfollow {
+    background-color: #dc3545; /* Red for unfollow */
+}
+
+.unfollow:hover {
+    background-color: #a71d2a; /* Darker red for hover */
+}
+
+
+
+/* Responsive adjustments for follow button */
+@media (max-width: 600px) {
+    .follow-btn {
+        font-size: 0.8rem;
+        padding: 4px 8px;
+    }
+}
+
+        
+        
+        
+        /* Image styling */
+        .newpost_page-img {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        /* Post body styling */
+        #newpost_page-body {
+            font-size: 1rem;
+            color: green;
+            margin: 10px 0;
+        }
+        /* Like, Comment, and Read More button styling */
+        .post-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .like-btn, .comment-btn, .read-comments-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #28a745;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .like-btn:hover, .comment-btn:hover, .read-comments-btn:hover {
+            color: #218838;
+        }
+        /* Comment input styling */
+        .comment-form {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 10px;
+            width: 100%;
+        }
+        .comment-input {
+            flex-grow: 1;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 0.9rem;
+        }
+        /* Comments section styling */
+        .comments-section {
+            padding: 10px;
+            border-top: 1px solid #ddd;
+            margin-top: 10px;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        .comment {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+            position: relative;
+            
+        }
+        .delete-comment-btn {
+            background: none;
+            border: none;
+            color: #dc3545; /* Red color */
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+        .comment-content {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            align-items: flex-start;
+        }
+        .delete-comment-btn:hover {
+            color: #a71d2a; /* Darker red on hover */
+        }
+        /* Responsive styling */
+        @media (max-width: 600px) {
+            .post-actions {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .newpost_page-img {
+                height: auto;
+            }
+        }
+    </style>
+
+    <script>
+        function toggleComments(postId) {
+            const allCommentsDiv = document.getElementById(`all-comments-${postId}`);
+            const button = document.getElementById(`toggle-comments-btn-${postId}`);
+
+            if (allCommentsDiv.style.display === 'none') {
+                allCommentsDiv.style.display = 'block';
+                button.textContent = 'Read Less';
+            } else {
+                allCommentsDiv.style.display = 'none';
+                button.textContent = 'Read Comments';
+            }
+        }
+
+        // Handle comment submission
+        document.querySelectorAll('.comment-form').forEach(form => {
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();  // Prevent the default form submission
+                const formData = new FormData(form);  // Create FormData object
+
+                const postId = form.id.split('-')[2];  // Extract post ID from form ID
+
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value  // CSRF token
+                    },
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();  // Parse JSON response
+                    } else {
+                        throw new Error('Something went wrong');
+                    }
+                })
+                .then(data => {
+                    // Update the comments section with the new comment
+                    const commentsSection = document.getElementById(`all-comments-${postId}`);
+                    const newComment = document.createElement('div');
+                    newComment.className = 'comment';
+                    newComment.id = `comment-${data.id}`; // Set id for the comment div
+                    newComment.innerHTML = `<strong>${data.username}:</strong> ${data.text}
+                        <button class="delete-comment-btn" onclick="deleteComment(${data.id})" title="Delete Comment">
+                            <i class="fas fa-times"></i>
+                        </button>`;
+                    commentsSection.appendChild(newComment);
+                    
+                    // Optionally clear the input field after submission
+                    form.querySelector('.comment-input').value = '';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            });
+        });
+
+        function likePost(postId, isLike) {
+            const form = document.getElementById(`like-form-${postId}`);
+            const url = form.getAttribute('action');
+            const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
+
+            // Send AJAX request
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                },
+                body: JSON.stringify({ 'like': isLike })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Update the like button and count
+                const likeButton = form.querySelector('.like-btn');
+                if (isLike) {
+                    likeButton.innerHTML = `<i class="fas fa-thumbs-down"></i> Unlike (${data.likes_count})`;
+                    likeButton.setAttribute('onclick', `likePost(${postId}, false)`);
+                } else {
+                    likeButton.innerHTML = `<i class="fas fa-thumbs-up"></i> Like (${data.likes_count})`;
+                    likeButton.setAttribute('onclick', `likePost(${postId}, true)`);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function deleteComment(commentId) {
+            fetch(`/posts/comments/delete/${commentId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')  // Add CSRF token
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove the comment from the DOM
+                    const commentElement = document.getElementById(`comment-${commentId}`);
+                    if (commentElement) {
+                        commentElement.remove();
+                    }
+                } else {
+                    alert('Failed to delete comment.');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+        document.addEventListener('click', function (event) {
+            if (event.target.matches('.delete-comment-btn')) {
+                const commentId = event.target.getAttribute('data-comment-id');
+                deleteComment(commentId);
+            }
+        });   
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        document.querySelectorAll('.follow-form').forEach(form => {
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();  // Prevent the form from reloading the page
+    
+                const url = form.getAttribute('action');
+                const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const button = form.querySelector('.follow-btn');
+                    if (data.is_following) {
+                        button.textContent = 'Unfollow';
+                        button.classList.add('unfollow');
+                        button.classList.remove('follow');
+                    } else {
+                        button.textContent = 'Follow +';
+                        button.classList.add('follow');
+                        button.classList.remove('unfollow');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+        
+    </script>
+{% endblock %}

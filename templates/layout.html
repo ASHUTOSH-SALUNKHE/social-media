@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+{% load static %}
+
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+        <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+        <!-- Add Font Awesome CDN for icons -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    </head>
+    
+    <body class="{% if request.path == '/authme/login/' or request.path == '/authme/register/' %}bg-black{% endif %}">
+        <nav class="navbar">
+            <!-- Hamburger icon for mobile -->
+            <div class="hamburger" id="hamburger">
+                <i class="fas fa-bars"></i> <!-- Font Awesome hamburger icon -->
+            </div>
+    
+            <!-- Navbar links -->
+            <div class="navbar-links" id="navbar-links">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'posts:newpost' %}">Posts</a>
+                    <a href="{% url 'posts:addpost' %}">Create Post</a>
+                    <a href="{% url 'posts:exp_users' %}">Explore Users</a>
+                    <a href="{% url 'posts:profile' %}">Profile</a>
+                    <a href="/about">About</a>
+                
+                    
+                <!-- Logout form -->
+                <form action="{% url 'authme:logout' %}" method="post" class="logout-form">
+                    {% csrf_token %}
+                    <button type="submit">Log Out</button>
+                </form>
+            </div>
+                {% endif %}
+            </div>
+        </nav>
+    
+        <main>
+            {% block content %}
+            {% endblock %}
+        </main>
+    
+        <!-- Script for toggling the navbar menu on mobile -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const hamburger = document.getElementById('hamburger');
+                const navbarLinks = document.getElementById('navbar-links');
+    
+                hamburger.addEventListener('click', function() {
+                    navbarLinks.classList.toggle('active');
+                });
+            });
+        </script>
+    </body>
+    
